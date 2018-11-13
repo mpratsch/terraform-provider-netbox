@@ -30,14 +30,13 @@ func dataSourceNetboxPrefixesRead(d *schema.ResourceData, meta interface{}) erro
 		var parm = ipam.NewIPAMPrefixesReadParams()
 		parm.SetID(int64(d.Get("prefixes_id").(int)))
 		//(&&meta).IPAM.IPAMPrefixesRead(parm,nil)
-
 		c := meta.(*ProviderNetboxClient).client
-		log.Printf("Obtive o client\n")
+		log.Printf("data_source_netbox_prefixes.go: Calling ProviderNetbox client\n")
+		cfg := meta.(*ProviderNetboxClient).configuration
 		//parms = ipam.NewIPAMPrefixesListParams()
 		out, err := c.IPAM.IPAMPrefixesRead(parm, nil)
-		log.Printf("- Executado...\n")
+		log.Printf("data_source_netbox_prefixes.go: Execute\n")
 		if err == nil {
-
 			d.SetId(strconv.FormatInt(out.Payload.ID, 10)) // Sempre setar o ID
 			d.Set("created", out.Payload.Created.String())
 			d.Set("description", out.Payload.Description)
@@ -45,11 +44,15 @@ func dataSourceNetboxPrefixesRead(d *schema.ResourceData, meta interface{}) erro
 			d.Set("is_pool", out.Payload.IsPool)
 			d.Set("prefix", out.Payload.Prefix)
 			d.Set("last_updated", out.Payload.LastUpdated)
-			d.Set("vlan_vid", *out.Payload.Vlan.Vid)
+			if cfg.UseVlan == 0 {
+				d.Set("vlan_vid", 0)
+			} else {
+				d.Set("vlan_vid", *out.Payload.Vlan.Vid)
+			}
 			log.Print("\n")
 		} else {
-			log.Printf("erro na chamada do IPAMPrefixesList\n")
-			log.Printf("Err: %v\n", err)
+			log.Printf("data_source_netbox_prefixes.go: error on IPAMPrefixesList\n")
+			log.Printf("data_source_netbox_prefixes.go: Err: %v\n", err)
 			log.Print("\n")
 			return err
 		}
@@ -78,8 +81,8 @@ func dataSourceNetboxPrefixesRead(d *schema.ResourceData, meta interface{}) erro
 			d.Set("vlan_Vid", *result.Vlan.Vid)
 			log.Print("\n")
 		} else {
-			log.Printf("erro na chamada do IPAMPrefixesList\n")
-			log.Printf("Err: %v\n", err)
+			log.Printf("data_source_netbox_prefixes: erro na chamada do IPAMPrefixesList\n")
+			log.Printf("data_source_netbox_prefixes: Err: %v\n", err)
 			log.Print("\n")
 			return err
 		}

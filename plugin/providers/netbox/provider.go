@@ -12,6 +12,7 @@ func init() {
 	descriptions = map[string]string{
 		"app_id":   "The application ID required for API requests",
 		"endpoint": "The full URL (plus path) to the API endpoint",
+		"use_vlan": "When the vlan feature is not binded to a prefix range",
 		// "timeout":  "Max. wait time should wait for a successful connection to the API",
 	}
 }
@@ -43,6 +44,12 @@ func providerSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Default:     "",
 			Description: descriptions["endpoint of netbox (without http:// and / )"],
+		},
+		"use_vlan": &schema.Schema{
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			Description: descriptions["Decision if vlan is used or not"],
 		},
 		"timeout": &schema.Schema{
 			Type:        schema.TypeString,
@@ -87,6 +94,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
 		AppID:    d.Get("app_id").(string),
 		Endpoint: d.Get("endpoint").(string),
+		UseVlan:  d.Get("use_vlan").(int),
 		// Timeout:  d.Get("timeout").(string),
 	}
 	return config.Client()

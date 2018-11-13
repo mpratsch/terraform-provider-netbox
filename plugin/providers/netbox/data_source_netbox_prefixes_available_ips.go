@@ -12,8 +12,6 @@ import (
 
 	"github.com/digitalocean/go-netbox/netbox/client/ipam"
 	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/digitalocean/go-netbox/netbox/client/ipam"
-	// "github.com/digitalocean/go-netbox/netbox/client"
 )
 
 func resourceNetboxPrefixesAvailableIps() *schema.Resource {
@@ -151,6 +149,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	log.Printf("[DEBUG] Configuration [%v]\n", c)
 	log.Printf("[DEBUG] AppID [%v]\n", c.AppID)
 	log.Printf("[DEBUG] Endpoint [%v]\n", c.Endpoint)
+	log.Printf("[DEBUG] UseVlan [%v]\n", c.UseVlan)
 
 	// log.Printf("%v", *Config.cfg)
 	// log.Printf("[DEBUG] Config.AppID %v\n", Config.AppID)
@@ -175,7 +174,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("[DEBUG] Error occurred after post")
-		log.Printf("[ERROR] Erro retorno http. %v \n", err)
+		log.Printf("[ERROR] Error returned http. %v \n", err)
 		return err
 	}
 	log.Printf("[DEBUG] Http Code Response: %v\n", resp.StatusCode)
@@ -185,7 +184,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	if resp.StatusCode != 201 {
 		return errors.New("Return http code: " + strconv.Itoa(resp.StatusCode))
 	}
-	// Dinamico ...
+	// Dynamisch
 	var i map[string]interface{}
 	log.Print("[DEBUG] Will Unmarshal the body")
 	jsonErr := json.Unmarshal(body, &i)
@@ -197,10 +196,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	log.Println("[DEBUG] ID setting")
 	d.SetId(strconv.FormatFloat(i["id"].(float64), 'f', -1, 64))
 	log.Println("[DEBUG] family")
-	// log.Printf("[DEBUG] family [%v]\n", i["family"].(int))
-	// d.Set("family", i["family"].(int))
 	log.Println("[DEBUG] address")
-
 	d.Set("address", i["address"].(string))
 	d.Set("mask", strings.Split(i["address"].(string), "/")[1])
 	d.Set("ip", strings.Split(i["address"].(string), "/")[0])
@@ -210,7 +206,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	d.Set("status", i["status"])
 	d.Set("created", i["created"].(string))
 	d.Set("last_updated", i["last_updated"].(string))
-	log.Printf("Incluido id: %v\n", d.Id())
+	log.Printf("Include id: %v\n", d.Id())
 	return nil
 }
 
@@ -221,14 +217,13 @@ func resourceNetboxPrefixesAvailableIpsRead(d *schema.ResourceData, meta interfa
 	// Pega por prefix_id
 	case d.Get("address_id").(string) != "":
 		var parm = ipam.NewIPAMIPAddressesReadParams()
-
 		id, _ := strconv.ParseInt(d.Get("address_id").(string), 10, 64)
 		parm.SetID(id)
 		//(&&meta).IPAM.IPAMPrefixesRead(parm,nil)
 
 		c := meta.(*ProviderNetboxClient).client
 		out, err := c.IPAM.IPAMIPAddressesRead(parm, nil)
-		log.Printf("- Executado...\n")
+		log.Printf("data_source_netbox_prefixes_available_ips.go: Execute...\n")
 		if err == nil {
 
 			d.Set("address_id", string(out.Payload.ID))
@@ -237,7 +232,7 @@ func resourceNetboxPrefixesAvailableIpsRead(d *schema.ResourceData, meta interfa
 			d.Set("mask", strings.Split(*out.Payload.Address, "/")[1])
 			d.Set("ip", strings.Split(*out.Payload.Address, "/")[0])
 
-			log.Printf("Setando Address_id %v\n", out.Payload.ID)
+			log.Printf("data_source_netbox_prefixes_available_ips.go: Setando Address_id %v\n", out.Payload.ID)
 			d.Set("created", out.Payload.Created)
 			if out.Payload.CustomFields != nil {
 				d.Set("custom_fields", out.Payload.CustomFields)
@@ -260,8 +255,8 @@ func resourceNetboxPrefixesAvailableIpsRead(d *schema.ResourceData, meta interfa
 			d.Set("last_updated", out.Payload.LastUpdated)
 			log.Print("\n")
 		} else {
-			log.Printf("erro na chamada do IPAMIPAddressesRead\n")
-			log.Printf("Err: %v\n", err)
+			log.Printf("data_source_netbox_prefixes_available_ips.go: error on IPAMIPAddressesRead\n")
+			log.Printf("data_source_netbox_prefixes_available_ips.go: Err: %v\n", err)
 			log.Print("\n")
 			return err
 		}
