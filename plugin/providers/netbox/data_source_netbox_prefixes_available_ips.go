@@ -30,7 +30,7 @@ func barePrefixesAvailableIpsSchema() map[string]*schema.Schema {
 			Type: schema.TypeInt,
 		},
 		"address_id": &schema.Schema{
-			Type: schema.TypeString,
+			Type: schema.TypeInt,
 		},
 		"description": &schema.Schema{
 			Type: schema.TypeString,
@@ -200,7 +200,7 @@ func resourceNetboxPrefixesAvailableIpsCreate(d *schema.ResourceData, meta inter
 	d.Set("address", i["address"].(string))
 	d.Set("mask", strings.Split(i["address"].(string), "/")[1])
 	d.Set("ip", strings.Split(i["address"].(string), "/")[0])
-	d.Set("address_id", strconv.FormatFloat(i["id"].(float64), 'f', -1, 64))
+	d.Set("address_id", i["id"])
 	log.Println("[DEBUG] description")
 	d.Set("description", i["description"].(string))
 	d.Set("status", i["status"])
@@ -215,11 +215,10 @@ func resourceNetboxPrefixesAvailableIpsRead(d *schema.ResourceData, meta interfa
 	log.Printf("resourceNetboxPrefixesAvailableIpsRead ............ ")
 	switch {
 	// Pega por prefix_id
-	case d.Get("address_id").(string) != "":
+	case d.Get("address_id").(int) != 0:
 		var parm = ipam.NewIPAMIPAddressesReadParams()
-		id, _ := strconv.ParseInt(d.Get("address_id").(string), 10, 64)
-		parm.SetID(id)
-		//(&&meta).IPAM.IPAMPrefixesRead(parm,nil)
+		id := d.Get("address_id").(int)
+		parm.SetID(int64(id))
 
 		c := meta.(*ProviderNetboxClient).client
 		out, err := c.IPAM.IPAMIPAddressesRead(parm, nil)
@@ -335,7 +334,7 @@ func resourceNetboxPrefixesAvailableIpsDelete(d *schema.ResourceData, meta inter
 		_, err := c.IPAM.IPAMIPAddressesDelete(parm, nil)
 		log.Printf("- Executado Delete...\n")
 		if err == nil {
-			log.Printf("[DEBUG] Recurso %v deletado\n", d.Get("address_id").(string))
+			log.Printf("[DEBUG] Recurso %v deletado\n", d.Get("address_id").(int))
 		} else {
 			log.Printf("erro na chamada do IPAMIPAddressesDelete\n")
 			log.Printf("Err: %v\n", err)
