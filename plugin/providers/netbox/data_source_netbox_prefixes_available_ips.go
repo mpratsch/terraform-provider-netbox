@@ -112,7 +112,7 @@ func resourcePrefixesAvailableIpsSchema() map[string]*schema.Schema {
 			v.Computed = true
 		case "created":
 			v.Optional = true
-
+			v.Computed = true
 		default:
 			v.Computed = true
 		}
